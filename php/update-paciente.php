@@ -19,6 +19,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data_nascimento = $_POST['data_nascimento'];
     $usuario_id = $_POST['usuario_id'];
 
+    // Verificar se foi enviada uma nova imagem
+    if (!empty($_FILES['imagem']['name'])) {
+        $extensao = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
+        $novoNome = uniqid() . '.' . $extensao;
+        $caminho = __DIR__ . '/../storage/' . $novoNome;
+
+        // Mover o arquivo para a pasta storage
+        if (move_uploaded_file($_FILES['imagem']['tmp_name'], $caminho)) {
+            // Inserir o caminho da nova imagem na tabela imagens
+            $stmt = $pdo->prepare("INSERT INTO imagens (path) VALUES (?)");
+            $stmt->execute([$novoNome]);
+            $imagem_id = $pdo->lastInsertId();
+        }
+    }
+
     // Atualiza o paciente no banco de dados
     $stmt = $pdo->prepare("UPDATE pacientes SET nome = ?, tipo_sanguineo = ?, data_nascimento = ?, usuario_id = ? WHERE id = ?");
     $stmt->execute([$nome, $tipo_sanguineo, $data_nascimento, $usuario_id, $id]);
@@ -84,6 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <?php endforeach; ?>
             </select>
 
+            <label for="imagem">Imagem de Perfil:</label>
+            <input type="file" id="imagem" name="imagem" accept="image/*">
+            
             <button type="submit">Atualizar</button>
         </form>
     </main>

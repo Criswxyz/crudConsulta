@@ -8,6 +8,14 @@ $id = $_GET['id'];
 $stmt = $pdo->prepare("SELECT pacientes.*, usuarios.username FROM pacientes LEFT JOIN usuarios ON pacientes.usuario_id = usuarios.id WHERE pacientes.id = ?");
 $stmt->execute([$id]);
 $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+// Definir imagem padrão se não houver imagem associada
+if ($paciente['path']) {
+    $imagemPath = '/storage/' . $paciente['path'];
+} else {
+    $imagemPath = '/storage/profile.png'; // Imagem padrão
+}
 ?>
 
 <!DOCTYPE html>
@@ -47,6 +55,7 @@ $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
     </header>
     <main>
         <?php if ($paciente): ?>
+             <img src="<?= $imagemPath ?>" alt="Imagem de Perfil" style="width: 150px; height: 150px;">
             <p><strong>ID:</strong> <?= $paciente['id'] ?></p>
             <p><strong>Nome:</strong> <?= $paciente['nome'] ?></p>
             <p><strong>Tipo Sanguíneo:</strong> <?= $paciente['tipo_sanguineo'] ?></p>

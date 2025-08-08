@@ -12,9 +12,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tipoSanguineo = $_POST['tipoSanguineo'];
     $usuario_id = $_POST['usuario_id'];
 
+    // Verificar se foi enviada uma imagem
+    if (!empty($_FILES['imagem']['name'])) {
+        $extensao = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
+        $novoNome = uniqid() . '.' . $extensao;
+        $caminho = __DIR__ . '/../storage/' . $novoNome;
+
+        // Mover o arquivo para a pasta storage
+        if (move_uploaded_file($_FILES['imagem']['tmp_name'], $caminho)) {
+            // Inserir o caminho da imagem na tabela imagens
+            $stmt = $pdo->prepare("INSERT INTO imagens (path) VALUES (?)");
+            $stmt->execute([$novoNome]);
+            $imagem_id = $pdo->lastInsertId();
+        }
+    } else {
+        $imagem_id = null;
+    }
+
     // Insere o novo aluno no banco de dados
-    $stmt = $pdo->prepare("INSERT INTO pacientes (nome, data_nascimento, tipo_sanguineo , usuario_id) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$nome, $dataNascimento, $tipoSanguineo, $usuario_id]);
+    $stmt = $pdo->prepare("INSERT INTO pacientes (nome, data_nascimento, tipo_sanguineo , usuario_id, imagem_id) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$nome, $dataNascimento, $tipoSanguineo, $usuario_id, $imagem_id]);
 
     header('Location: index-paciente.php');
 }
@@ -51,6 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <option value="<?= $usuario['id'] ?>"><?= $usuario['username'] ?></option>
                 <?php endforeach; ?>
             </select>
+
+            <label for="imagem">Imagem de Perfil:</label>
+            <input type="file" id="imagem" name="imagem" accept="image/*">
 
             <button type="submit">Adicionar</button>
         </form>
